@@ -14,18 +14,21 @@ class Actor(nn.Module):
             nn.Linear(256, 128), #final hidden layer
             nn.ReLU(),
             nn.Linear(128, action_dim), #output 12 raw numbers (for each servo), or whatever action_dim is set to
-            nn.Tanh() #squeeze numbers between -1 and 1 for easy scaling
         )
 
         #separate log_std for the actor
         #create a learnable vector of 12 zeros, representing the uncertainty
-        self.log_std = nn.Parameter(torch.zeros(1, action_dim))
+        self.log_std = nn.Parameter(torch.zeros(action_dim))
 
     #to move layers and return distributions
     def forward(self, state):
         mu = self.net(state) #calculate mean, pass through network for ideal action
-        std = self.log_std.exp().expand_as(mu) #convert log_std to actual standard deviation
+        std = torch.exp(self.log_std) #convert log_std to actual standard deviation
         return Normal(mu, std) #create distribution of probability, allowing it to try slightly different things during training
+    
+    # Added a function that calculates the log probability of taking an action in a given state. This is used for calculating the loss during a training cycle.
+    def log_prob(self, dist, action):
+        return dist.log_prob(action).sum(dim=-1) # calculate log probability of taken action and sum it across action dimensions
 
 class Critic(nn.Module):
     def __init__(self, state_dim):
@@ -42,4 +45,4 @@ class Critic(nn.Module):
         )
 
     def forward(self, state):
-        return self.net(state) #return predicted reward
+        return self.net(state).squeeze(-1) #return predicted reward
