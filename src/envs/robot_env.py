@@ -4,13 +4,16 @@ import pybullet_data
 import numpy as np
 import math
 from env_randomizer import PoissonDisc
+from pathlib import Path
 
 # TODOs
-# Get max lidar distance
 # Add friction to robot parts
 
+base_path = Path.cwd()
+robot_urdf_path = base_path / "robot" / "assets" / "SpdrBot_pybullet.urdf"
+
 class RobotEnv:
-    def __init__(self, grid_size: int, num_of_obsticles: int, robot_file: str="spider.urdf", gui: bool=False, obstacle_distance: float=1.3, min_dist_to_goal: float=4.0):
+    def __init__(self, grid_size: int, num_of_obsticles: int, robot_file: str=robot_urdf_path, gui: bool=False, obstacle_distance: float=1.3, min_dist_to_goal: float=4.0):
 
         self.client_id = p.connect(p.GUI if gui else p.DIRECT)
         
@@ -19,7 +22,7 @@ class RobotEnv:
         self.obstacle_distance = obstacle_distance
         self.num_of_obsticles = num_of_obsticles
         self.min_dist_to_goal = min_dist_to_goal
-        self.robot_file = robot_file
+        self.robot_file = str(robot_file)
 
         self.joint_indicies = []
         self.foot_indicies = []
@@ -133,7 +136,7 @@ class RobotEnv:
             if body_id != -1:
                 self.obstacle_ids.add(body_id)
     
-    def _get_lidar_points(self, num_of_rays=360, ray_range=5, height=.02):
+    def _get_lidar_points(self, num_of_rays=360, ray_range=12, height=.02):
         """Calculates 360 degree vector of distances to object
         
         Casts the num of rays evenly spaced in 360 degree range around
