@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 env = robenv.RobotEnv(16, 0)
 
-#actor critic class - will remove once officially implemented
+#actor critic class and calculations - will remove once officially implemented
 
 class ActorCritic(nn.Module):
     def __init__(self, actor, critic):
@@ -54,3 +54,26 @@ def calculate_losses(surrogate_loss, entropy, entropy_coefficient, returns, valu
     policy_loss=  -(surrogate_loss + entropy_bonus ).sum()
     value_loss=  f.smooth_l1_loss(returns, value_pred).sum()
     return policy_loss, value_loss
+
+def init_training():
+    states = []
+    actions = []
+    actions_log_probability = []
+    values = []
+    rewards = []
+    done = False
+    episode_reward = 0
+    return states, actions, actions_log_probability, values, rewards, done, episode_reward
+
+def foward_pass(env, agent, optimizer, discount_factor):
+    pass
+
+def update_policy(agent,states,actions,actions_log_probability_old,advantages,returns, optimizer,ppo_steps,epsilon,entropy_coefficient):
+    pass
+
+def evaluate(env, agent):
+    pass
+
+def run_ppo():
+    pass
+
