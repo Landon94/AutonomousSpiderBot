@@ -77,3 +77,11 @@ def evaluate(env, agent):
 def run_ppo():
     pass
 
+def plot_losses(policy_losses, value_losses):
+    pass
+
+def plot_test_rewards(test_rewards, reward_threshold):
+    pass
+
+def plot_train_rewards(train_rewards, reward_threshold):
+    pass
