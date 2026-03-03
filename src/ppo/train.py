@@ -1,5 +1,4 @@
 from src.ppo import network as net
-from src.envs import robot_env as robenv
 import torch
 from torch import optim, distributions
 from torch.utils.data import TensorDataset, DataLoader
@@ -203,6 +202,28 @@ def update_policy(agent, states, actions, actions_log_probability_old, advantage
 
     return total_policy_loss / ppo_steps, total_value_loss / ppo_steps
 
+def save_agent(agent: ActorCritic, path: str):
+    """Serialize the agent's parameters to disk.
+
+    Only the state_dict is saved so that the file size stays reasonable and a
+    compatible architecture can be re-constructed by calling ``create_agent``
+    before loading.
+    """
+    torch.save(agent.state_dict(), path)
+
+
+def load_agent(path: str, env):
+    """Create a new agent matching ``env`` and load parameters from ``path``.
+
+    The saved file is expected to contain a state_dict produced by
+    :func:`save_agent`.
+    """
+    agent = create_agent(env)
+    state = torch.load(path)
+    agent.load_state_dict(state)
+    return agent
+
+
 def evaluate(env, agent):
     agent.eval()
     done = False
@@ -219,8 +240,20 @@ def evaluate(env, agent):
         episode_reward += reward
     return episode_reward
 
-def run_ppo():
+def run_ppo(save_path: str | None = None):
+    """Train the PPO agent.
+
+    If ``save_path`` is provided the agent parameters will be written to that
+    location once training completes (or immediately upon hitting the reward
+    threshold).
+    """
     global env_train, env_test
+
+    # import robot_env when necessary to avoid heavy dependencies during testing
+    try:
+        from src.envs import robot_env as robenv
+    except ImportError:
+        raise RuntimeError("robot_env is required for training but could not be imported")
 
     # instantiate environments when training begins
     env_train = robenv.RobotEnv(16, 0)
@@ -285,7 +318,14 @@ def run_ppo():
 
         if mean_test_rewards >= REWARD_THRESHOLD:
             print(f'Reached reward threshold in {episode} episodes')
+            # save model when target is reached if a path has been provided
+            if save_path is not None:
+                save_agent(agent, save_path)
             break
+
+    # always save final agent if path was given
+    if save_path is not None:
+        save_agent(agent, save_path)
 
 def plot_losses(policy_losses, value_losses):
     plt.figure()
