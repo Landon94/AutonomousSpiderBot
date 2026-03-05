@@ -46,3 +46,16 @@ class Critic(nn.Module):
 
     def forward(self, state):
         return self.net(state).squeeze(-1) #return predicted reward
+
+# actor-critic wrapper around the two network modules
+class ActorCritic(nn.Module):
+    def __init__(self, actor: nn.Module, critic: nn.Module):
+        super().__init__()
+        self.actor = actor
+        self.critic = critic
+
+    def forward(self, state: torch.Tensor):
+        # actor returns a distribution object for continuous actions
+        dist = self.actor(state)
+        value = self.critic(state)
+        return dist, value
